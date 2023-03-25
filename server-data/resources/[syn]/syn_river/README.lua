@@ -15,3 +15,6 @@ Agradecimientos a wcrp_trumpet.
 
 ---- VERSION 1.2 11-08-2020----
 - Añadido sistema de beber en el río. Ahora ya puedes beber cuando tengas sed.
+
+---- added support vor vorp metabolism.
+---- added support for vorp inventory and added empty bottles that you can fill up at the river also.

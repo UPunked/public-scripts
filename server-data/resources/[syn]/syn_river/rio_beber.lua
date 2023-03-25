@@ -1,3 +1,10 @@
+local VorpCore = {}
+
+TriggerEvent("getCore", function(core)
+    VorpCore = core
+end)
+
+
 local keys = { ['G'] = 0x760A9C6F, ['S'] = 0xD27782E3, ['W'] = 0x8FD015D8, ['H'] = 0x24978A28, ['G'] = 0x5415BE48, ["ENTER"] = 0xC7B5340A, ['E'] = 0xDFF812F9,["BACKSPACE"] = 0x156F7119 }
 local WaterTypes = {
     [1] =  {["name"] = "Sea of Coronado",       ["waterhash"] = -247856387, ["watertype"] = "lake"},
@@ -32,33 +39,52 @@ local WaterTypes = {
 --menu
 
 Citizen.CreateThread(function()
-	while true do
-		Citizen.Wait(1)
+    while true do
+        Citizen.Wait(1)
         local coords = GetEntityCoords(PlayerPedId())
-        local Water = Citizen.InvokeNative(0x5BA7A68A346A5A91,coords.x+3, coords.y+3, coords.z)
+        local Water = Citizen.InvokeNative(0x5BA7A68A346A5A91, coords.x + 3, coords.y + 3, coords.z)
         local playerPed = PlayerPedId()
-            for k,v in pairs(WaterTypes) do 
+        for k,v in pairs(WaterTypes) do 
             if Water == WaterTypes[k]["waterhash"]  then
                 if IsPedOnFoot(PlayerPedId()) then
                     if IsEntityInWater(PlayerPedId()) then
-                        DrawTxt("Press [~e~G~q~] to wash, [~e~ENTER~q~] to Drink Water", 0.15, 0.30, 0.1, 0.3, true, 255, 255, 255, 255, true, 10000)
+                        DrawTxt("Press [~e~G~q~] to wash, [~e~ENTER~q~] to Drink Water [~e~E~q~ to fill bottle!]", 0.15, 0.30, 0.1, 0.3, true, 255, 255, 255, 255, true, 10000)
                         if IsControlJustReleased(0, 0x760A9C6F) then -- wash G
                             StartWash("amb_misc@world_human_wash_face_bucket@ground@male_a@idle_d", "idle_l")
                         end
                         if IsControlJustReleased(0, 0xC7B5340A) then -- drink enter
-                        TriggerEvent("drp:rio")
-                        Citizen.Wait(10000)
-                        TriggerEvent('fred_meta:consume', 0,20,0,0,0.0,0,0,0,0.0,0.0)
-                        PlaySoundFrontend("Core_Fill_Up", "Consumption_Sounds", true, 0)
-
+                            TriggerEvent("drp:rio")
+                            Citizen.Wait(10000)
+                            TriggerEvent('vorpmetabolism:changeValue', 'Thirst', 90)
+                            TriggerEvent('fred_meta:consume', 0, 20, 0, 0, 0.0, 0, 0, 0, 0.0, 0.0)
+                            PlaySoundFrontend("Core_Fill_Up", "Consumption_Sounds", true, 0)
+                        end
+                        if IsControlJustReleased(0, 0xCEFD9220) then -- E
+                            TriggerServerEvent('playerDrank')
+                            TriggerEvent("drp:fill")
+                        end
                     end
                 end
-                
             end
-     end
+        end
     end
-end
 end)
+
+AddEventHandler('drp:fill', function() --using premade anim added 2 second cancel so it's unique still.
+    local _source = source
+    if fill ~= 0 then
+        SetEntityAsMissionEntity(fill)
+        DeleteObject(nativerfillprop)
+        fill = 0
+    end
+    local playerPed = PlayerPedId()
+    Citizen.Wait(0)
+    ClearPedTasksImmediately(PlayerPedId())
+    TaskStartScenarioInPlace(playerPed, GetHashKey('WORLD_HUMAN_BUCKET_DRINK_GROUND'), -1, true, false, false, false)
+    Citizen.Wait(2000) -- Wait for 2 seconds
+    ClearPedTasks(PlayerPedId())
+end)
+
 
 AddEventHandler('drp:rio', function()
     local _source = source
